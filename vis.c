@@ -2110,6 +2110,20 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	/* handle command line arguments that don't require vis to be started */
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			case 'v':
+				printf("vis version %s\n", VERSION);
+				exit(EXIT_SUCCESS);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
 	mode_prev = mode = config->mode;
 	setup();
 
