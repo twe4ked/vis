@@ -163,6 +163,7 @@ static Action action;       /* current action which is in progress */
 static Action action_prev;  /* last operator action used by the repeat '.' key */
 static Buffer buffer_repeat;/* repeat last modification i.e. insertion/replacement */
 static Map *cmdmap;         /* :-commands are stored here, used for prefix searches */
+static int exit_status = 0; /* program exit status */
 
 /** operators */
 static void op_change(OperatorContext *c);
@@ -508,6 +509,8 @@ static bool cmd_quit(Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_bdelete(Filerange*, enum CmdOpt, const char *argv[]);
 /* close all windows, exit editor, discard modifications if forced */
 static bool cmd_qall(Filerange*, enum CmdOpt, const char *argv[]);
+/* same as "qall!" except vis returns a non-zero exit code. */
+static bool cmd_cquit(Filerange*, enum CmdOpt, const char *argv[]);
 /* for each argument try to insert the file content at current cursor postion */
 static bool cmd_read(Filerange*, enum CmdOpt, const char *argv[]);
 static bool cmd_substitute(Filerange*, enum CmdOpt, const char *argv[]);
@@ -1564,6 +1567,16 @@ static bool cmd_qall(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	return vis->windows == NULL;
 }
 
+static bool cmd_cquit(Filerange *range, enum CmdOpt opt, const char *argv[]) {
+	for (EditorWin *next, *win = vis->windows; win; win = next) {
+		next = win->next;
+		editor_window_close(win);
+	}
+	exit_status = 1;
+	quit(NULL);
+	return true;
+}
+
 static bool cmd_read(Filerange *range, enum CmdOpt opt, const char *argv[]) {
 	size_t pos = window_cursor_get(vis->win->win);
 	for (const char **file = &argv[1]; *file; file++) {
@@ -2158,5 +2171,5 @@ int main(int argc, char *argv[]) {
 	editor_free(vis);
 	vis_shutdown();
 	endwin();
-	return 0;
+	return exit_status;
 }
